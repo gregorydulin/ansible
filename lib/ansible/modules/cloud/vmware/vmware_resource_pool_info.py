@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Copyright: (c) 2018, Abhijeet Kasurde <akasurde@redhat.com>
+# Copyright: (c) 2019, Gregory M. Dulin <gregory.dulin@caci.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
@@ -46,6 +47,24 @@ resource_pool_info:
     type: list
     sample: [
         {
+            "child_resource_pools": [
+                {
+                    "name": "ChildResourcePool01"
+                },
+                {
+                    "name": "ChildResourcePool02"
+                }
+            ],
+            "child_vms": [
+                {
+                    "name": "ChildVm01",
+                    "uuid": "01234567-89ab-cdef-0123-456789abcdef"
+                },
+                {
+                    "name": "ChildVm02",
+                    "uuid": "11234567-89ab-cdef-0123-456789abcdef"
+                }
+            ]
             "cpu_allocation_expandable_reservation": false,
             "cpu_allocation_limit": 4121,
             "cpu_allocation_overhead_limit": null,
@@ -94,8 +113,23 @@ class ResourcePoolInfoManager(PyVmomi):
         resource_pool_info = []
         rps = get_all_objs(self.content, [vim.ResourcePool])
         for rp in rps:
+            child_resource_pools = []
+            for child in rp.resourcePool:
+                tmp_child_info = dict(
+                    name=child.summary.name,
+                )
+                child_resource_pools.append(tmp_child_info)
+            child_vms = []
+            for vm in rp.vm:
+                tmp_child_info = dict(
+                    name=vm.config.name,
+                    uuid=vm.config.uuid,
+                )
+                child_vms.append(tmp_child_info)
             tmp_info = dict(
                 name=rp.name,
+                child_resource_pools=child_resource_pools,
+                child_vms=child_vms,
                 cpu_allocation_reservation=rp.config.cpuAllocation.reservation,
                 cpu_allocation_expandable_reservation=rp.config.cpuAllocation.expandableReservation,
                 cpu_allocation_limit=rp.config.cpuAllocation.limit,
